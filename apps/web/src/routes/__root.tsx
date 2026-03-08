@@ -8,6 +8,7 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 import { QueryClient, useQueryClient } from "@tanstack/react-query";
+import { VowelAgent } from "@vowel.to/client/react";
 
 import { APP_DISPLAY_NAME } from "../branding";
 import { Button } from "../components/ui/button";
@@ -22,6 +23,7 @@ import { terminalRunningSubprocessFromEvent } from "../terminalActivity";
 import { onServerConfigUpdated, onServerWelcome } from "../wsNativeApi";
 import { providerQueryKeys } from "../lib/providerReactQuery";
 import { collectActiveTerminalThreadIds } from "../lib/terminalStateCleanup";
+import { updateVowelContext } from "../vowel.client";
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -50,8 +52,10 @@ function RootRouteView() {
     <ToastProvider>
       <AnchoredToastProvider>
         <EventRouter />
+        <VowelStateSync />
         <DesktopProjectBootstrap />
         <Outlet />
+        <VowelAgent position="bottom-right" enableFloatingCursor={false} />
       </AnchoredToastProvider>
     </ToastProvider>
   );
@@ -298,5 +302,15 @@ function EventRouter() {
 
 function DesktopProjectBootstrap() {
   // Desktop hydration runs through EventRouter project + orchestration sync.
+  return null;
+}
+
+function VowelStateSync() {
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+
+  useEffect(() => {
+    updateVowelContext();
+  }, [pathname]);
+
   return null;
 }
