@@ -9,6 +9,7 @@ import {
 import { useEffect, useRef } from "react";
 import { QueryClient, useQueryClient } from "@tanstack/react-query";
 import { Throttler } from "@tanstack/react-pacer";
+import { VowelAgent } from "@vowel.to/client/react";
 
 import { APP_DISPLAY_NAME } from "../branding";
 import { Button } from "../components/ui/button";
@@ -23,6 +24,7 @@ import { terminalRunningSubprocessFromEvent } from "../terminalActivity";
 import { onServerConfigUpdated, onServerWelcome } from "../wsNativeApi";
 import { providerQueryKeys } from "../lib/providerReactQuery";
 import { collectActiveTerminalThreadIds } from "../lib/terminalStateCleanup";
+import { VowelStateSync } from "../vowel.state";
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -52,7 +54,9 @@ function RootRouteView() {
       <AnchoredToastProvider>
         <EventRouter />
         <DesktopProjectBootstrap />
+        <VowelStateSync />
         <Outlet />
+        <VowelAgent position="bottom-right" enableFloatingCursor={false} />
       </AnchoredToastProvider>
     </ToastProvider>
   );

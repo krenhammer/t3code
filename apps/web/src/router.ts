@@ -7,10 +7,12 @@ import { StoreProvider } from "./store";
 
 type RouterHistory = NonNullable<Parameters<typeof createRouter>[0]["history"]>;
 
+let routerInstance: ReturnType<typeof createRouter> | null = null;
+
 export function getRouter(history: RouterHistory) {
   const queryClient = new QueryClient();
 
-  return createRouter({
+  routerInstance = createRouter({
     routeTree,
     history,
     context: {
@@ -23,9 +25,15 @@ export function getRouter(history: RouterHistory) {
         createElement(StoreProvider, null, children),
       ),
   });
+
+  return routerInstance;
 }
 
-export type AppRouter = ReturnType<typeof getRouter>;
+export function getRouterInstance(): typeof routerInstance {
+  return routerInstance;
+}
+
+export type AppRouter = typeof routerInstance;
 
 declare module "@tanstack/react-router" {
   interface Register {
