@@ -6,9 +6,10 @@ import {
   useNavigate,
   useRouterState,
 } from "@tanstack/react-router";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { QueryClient, useQueryClient } from "@tanstack/react-query";
 import { Throttler } from "@tanstack/react-pacer";
+import { VowelProvider, VowelAgent } from "@vowel.to/client/react";
 
 import { APP_DISPLAY_NAME } from "../branding";
 import { Button } from "../components/ui/button";
@@ -23,6 +24,28 @@ import { terminalRunningSubprocessFromEvent } from "../terminalActivity";
 import { onServerConfigUpdated, onServerWelcome } from "../wsNativeApi";
 import { providerQueryKeys } from "../lib/providerReactQuery";
 import { collectActiveTerminalThreadIds } from "../lib/terminalStateCleanup";
+import { getVowel, setAppId, subscribeToVowelChanges, type VowelClientType } from "../vowel.client";
+import { VowelStateSync } from "../vowel.state";
+
+function VowelInit() {
+  useEffect(() => {
+    const appId = import.meta.env.VITE_VOWEL_APP_ID;
+    if (appId) {
+      setAppId(appId);
+    }
+  }, []);
+  return null;
+}
+
+function AppLoading() {
+  return (
+    <div className="flex h-screen flex-col bg-background text-foreground">
+      <div className="flex flex-1 items-center justify-center">
+        <p className="text-sm text-muted-foreground">Loading {APP_DISPLAY_NAME}...</p>
+      </div>
+    </div>
+  );
+}
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -35,6 +58,19 @@ export const Route = createRootRouteWithContext<{
 });
 
 function RootRouteView() {
+  const [vowel, setVowel] = useState<VowelClientType>(getVowel());
+  const appId = import.meta.env.VITE_VOWEL_APP_ID;
+
+  useEffect(() => {
+    const unsubscribe = subscribeToVowelChanges((client) => setVowel(client));
+    return () => unsubscribe();
+  }, []);
+
+  const vowelReady = vowel !== null || !appId;
+  if (!vowelReady) {
+    return <AppLoading />;
+  }
+
   if (!readNativeApi()) {
     return (
       <div className="flex h-screen flex-col bg-background text-foreground">
@@ -48,13 +84,18 @@ function RootRouteView() {
   }
 
   return (
-    <ToastProvider>
-      <AnchoredToastProvider>
-        <EventRouter />
-        <DesktopProjectBootstrap />
-        <Outlet />
-      </AnchoredToastProvider>
-    </ToastProvider>
+    <VowelProvider client={vowel ?? null}>
+      <ToastProvider>
+        <AnchoredToastProvider>
+          <VowelInit />
+          <VowelStateSync />
+          <EventRouter />
+          <DesktopProjectBootstrap />
+          <Outlet />
+          <VowelAgent position="bottom-right" enableFloatingCursor={false} />
+        </AnchoredToastProvider>
+      </ToastProvider>
+    </VowelProvider>
   );
 }
 

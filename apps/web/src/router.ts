@@ -1,4 +1,4 @@
-import { createElement } from "react";
+import { createElement, type ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createRouter } from "@tanstack/react-router";
 
@@ -7,25 +7,37 @@ import { StoreProvider } from "./store";
 
 type RouterHistory = NonNullable<Parameters<typeof createRouter>[0]["history"]>;
 
-export function getRouter(history: RouterHistory) {
+let cachedRouter: ReturnType<typeof createRouter> | null = null;
+
+export function getRouter(history: RouterHistory): ReturnType<typeof createRouter> {
+  if (cachedRouter) {
+    return cachedRouter;
+  }
+
   const queryClient = new QueryClient();
 
-  return createRouter({
+  cachedRouter = createRouter({
     routeTree,
     history,
     context: {
       queryClient,
     },
-    Wrap: ({ children }) =>
+    Wrap: ({ children }: { children: ReactNode }) =>
       createElement(
         QueryClientProvider,
         { client: queryClient },
         createElement(StoreProvider, null, children),
       ),
   });
+
+  return cachedRouter;
 }
 
-export type AppRouter = ReturnType<typeof getRouter>;
+export function getRouterInstance(): ReturnType<typeof createRouter> | null {
+  return cachedRouter;
+}
+
+export type AppRouter = ReturnType<typeof createRouter>;
 
 declare module "@tanstack/react-router" {
   interface Register {
