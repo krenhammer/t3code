@@ -60,6 +60,8 @@ jobs:
         contains(fromJson('["OWNER","MEMBER","COLLABORATOR"]'), github.event.review.author_association)
       )
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
     permissions:
       id-token: write
       contents: write
@@ -67,7 +69,7 @@ jobs:
       issues: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 1
           persist-credentials: true
@@ -303,7 +305,7 @@ jobs:
 
       - name: Cache opencode
         id: cache_opencode
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.opencode/bin
           key: opencode-${{ runner.os }}-${{ runner.arch }}-${{ steps.opencode_version.outputs.version }}
@@ -320,7 +322,7 @@ jobs:
           mkdir -p .opencode/skills
           for skill in vowel-react vowel-vanilla vowel-webcomponent; do
             if [ ! -f ".vowelbot/skills/${skill}/SKILL.md" ]; then
-              echo "::error::Missing injected skill bundle at .vowelbot/skills/${skill}"
+              echo "::error::Missing committed skill bundle at .vowelbot/skills/${skill}. Re-sync the vowelbot bootstrap commit so the injected skills are present in the repository."
               exit 1
             fi
             cp -R ".vowelbot/skills/${skill}" ".opencode/skills/${skill}"
@@ -363,7 +365,7 @@ jobs:
           Follow the chosen primary skill exactly.
           Do not default to React. If the repo is non-React, choose vowel-vanilla or vowel-webcomponent and keep implementation non-React.
           For non-React projects, do not add React-only patterns/files (e.g., VowelProvider, hooks, React context wrappers).
-          React-specific guardrail (only when vowel-react is selected): enforce context-ready initialization with deferred setAppId/client readiness so the mic button can appear (see initialization-context-ready reference).
+          React-specific guardrail (only when vowel-react is selected): enforce context-ready initialization with deferred setAppId/client readiness so the mic button can appear. If a root/layout gates rendering on X being ready, ensure the initializer for X is not mounted behind that same gate. Treat this as a startup deadlock risk, verify optional integrations initialize before or outside the gated subtree, fail open on init failure instead of blocking the app, and check hook API usage carefully so setup is not skipped by incorrect assumptions about return values or invocation style (see initialization-context-ready reference).
           State-driven architecture: write to app stores, NOT DOM. Prefer custom actions over DOM manipulation.
           Use the repository's package manager for dependency operations:
           - package manager: ${PACKAGE_MANAGER}
