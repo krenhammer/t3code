@@ -9,6 +9,7 @@ import {
 import { useEffect, useRef } from "react";
 import { QueryClient, useQueryClient } from "@tanstack/react-query";
 import { Throttler } from "@tanstack/react-pacer";
+import { VowelAgent } from "@vowel.to/client/react";
 
 import { APP_DISPLAY_NAME } from "../branding";
 import { Button } from "../components/ui/button";
@@ -53,6 +54,7 @@ function RootRouteView() {
         <EventRouter />
         <DesktopProjectBootstrap />
         <Outlet />
+        <VowelAgent position="bottom-right" enableFloatingCursor={false} />
       </AnchoredToastProvider>
     </ToastProvider>
   );
